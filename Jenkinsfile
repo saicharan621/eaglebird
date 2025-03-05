@@ -11,14 +11,14 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/saicharan621/eaglebird.git'
+                git branch: 'main', url: 'https://github.com/saicharan621/eaglebird.git'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
-                    sh 'mvn sonar:sonar'
+                    sh 'mvn clean verify sonar:sonar'
                 }
             }
         }
@@ -43,14 +43,19 @@ pipeline {
 
         stage('Push Image to Docker Hub') {
             steps {
-                sh 'docker login -u saicharan6771 -p Welcome@123'
-                sh 'docker push $DOCKER_IMAGE'
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh 'docker push $DOCKER_IMAGE'
+                }
             }
         }
 
         stage('Deploy to EKS') {
             steps {
-                sh 'kubectl apply -f deployment.yaml'
+                withCredentials([string(credentialsId: 'aws-kubeconfig', variable: 'KUBECONFIG_PATH')]) {
+                    sh 'aws eks update-kubeconfig --name helloworld-cluster --region ap-southeast-1'
+                    sh 'kubectl apply -f deployment.yaml'
+                }
             }
         }
     }
