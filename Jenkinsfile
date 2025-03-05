@@ -11,7 +11,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/saicharan621/box.git'
+                git 'https://github.com/saicharan621/eaglebird.git'
             }
         }
 
