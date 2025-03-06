@@ -51,9 +51,12 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE .'
-            }
-        }
+        sh '''
+            cp target/eaglebird-1.0.jar eaglebird-1.0.jar  
+            docker build -t $DOCKER_IMAGE .
+        '''
+    }
+}
 
         stage('Push Image to Docker Hub') {
             steps {
