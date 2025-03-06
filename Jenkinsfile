@@ -22,7 +22,7 @@ pipeline {
                 withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
                     sh '''
                         mvn clean verify sonar:sonar \
-                        -Dsonar.host.url=http://3.110.120.134:9000 \
+                        -Dsonar.host.url=$SONAR_URL \
                         -Dsonar.login=$SONAR_TOKEN
                     '''
                 }
@@ -51,13 +51,13 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-        sh '''
-            ls -lah target/  # Debug: Check if the JAR exists
-            cp target/eaglebird-1.0-SNAPSHOT.jar eaglebird-1.0.jar  
-            docker build -t $DOCKER_IMAGE .
-        '''
-    }
-}
+                sh '''
+                    ls -lah target/  # Debug: Check if the JAR exists
+                    cp target/eaglebird-1.0-SNAPSHOT.jar eaglebird-1.0.jar  
+                    docker build -t $DOCKER_IMAGE .
+                '''
+            }
+        }
 
         stage('Push Image to Docker Hub') {
             steps {
@@ -72,9 +72,10 @@ pipeline {
 
         stage('Deploy to EKS') {
             steps {
-                withCredentials([string(credentialsId: 'aws-kubeconfig', variable: 'KUBECONFIG_PATH')]) {
+                withCredentials([file(credentialsId: 'aws-kubeconfig', variable: 'KUBECONFIG')]) {
                     sh '''
-                        aws eks --region $AWS_REGION update-kubeconfig --name $EKS_CLUSTER
+                        export KUBECONFIG=$KUBECONFIG  # Use the provided kubeconfig file
+                        kubectl get nodes  # Debugging step to ensure cluster connectivity
                         kubectl apply -f deployment.yaml
                         kubectl apply -f service.yaml
                     '''
