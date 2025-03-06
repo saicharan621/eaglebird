@@ -53,7 +53,7 @@ pipeline {
             steps {
                 sh '''
                     ls -lah target/  # Debugging step to check if the JAR exists
-                    cp target/eaglebird-1.0-SNAPSHOT.jar eaglebird-1.0.jar  
+                    cp target/*.jar eaglebird-1.0.jar  # Copy the built JAR file
                     docker build -t $DOCKER_IMAGE .
                 '''
             }
@@ -72,20 +72,21 @@ pipeline {
 
         stage('Deploy to EKS') {
             steps {
-                withAWS(credentials: 'aws-credentials', region: "${AWS_REGION}") {  // Use AWS IAM Credentials
+                withAWS(credentials: 'aws-credentials', region: "${AWS_REGION}") {  
                     withCredentials([file(credentialsId: 'aws-kubeconfig', variable: 'KUBECONFIG')]) {
                         sh '''
-                            set -e  # Exit on first error
-                            export KUBECONFIG=$KUBECONFIG  # Use the provided kubeconfig file
-
+                            set -ex  # Debug mode to show errors
+                            
                             echo "Checking AWS Authentication..."
-                            aws sts get-caller-identity  # Verify AWS authentication
+                            aws sts get-caller-identity
 
                             echo "Updating Kubeconfig for EKS..."
-                            aws eks --region $AWS_REGION update-kubeconfig --name $EKS_CLUSTER
+                            export CUSTOM_KUBECONFIG=/tmp/kubeconfig  # Use a writable kubeconfig file
+                            export KUBECONFIG=$CUSTOM_KUBECONFIG  
+                            aws eks --region $AWS_REGION update-kubeconfig --name $EKS_CLUSTER --kubeconfig $CUSTOM_KUBECONFIG
 
                             echo "Checking EKS Cluster Nodes..."
-                            kubectl get nodes  # Ensure EKS is accessible
+                            kubectl get nodes  
 
                             echo "Deploying to EKS..."
                             kubectl apply -f deployment.yaml
