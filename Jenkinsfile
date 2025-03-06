@@ -7,7 +7,7 @@ pipeline {
         SONAR_URL = "http://3.110.120.134:9000"
         DOCKER_IMAGE = "saicharan6771/helloworld"
         EKS_CLUSTER = "helloworld-cluster"
-        AWS_REGION = "ap-south-1"  
+        AWS_REGION = "ap-south-1"
     }
 
     stages {
@@ -19,8 +19,12 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQube') {  
-                    sh 'mvn clean verify sonar:sonar'
+                withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                    sh '''
+                        mvn clean verify sonar:sonar \
+                        -Dsonar.host.url=http://3.110.120.134:9000 \
+                        -Dsonar.login=$SONAR_TOKEN
+                    '''
                 }
             }
         }
@@ -34,7 +38,13 @@ pipeline {
         stage('Push JAR to Nexus') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                    sh 'mvn deploy -DrepositoryId=nexus -DnexusUrl=$NEXUS_URL/repository/$NEXUS_REPO'
+                    sh '''
+                        mvn deploy \
+                        -DrepositoryId=nexus \
+                        -Durl=$NEXUS_URL/repository/$NEXUS_REPO \
+                        -Dnexus.username=$NEXUS_USER \
+                        -Dnexus.password=$NEXUS_PASS
+                    '''
                 }
             }
         }
@@ -48,8 +58,10 @@ pipeline {
         stage('Push Image to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                    sh 'docker push $DOCKER_IMAGE'
+                    sh '''
+                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                        docker push $DOCKER_IMAGE
+                    '''
                 }
             }
         }
