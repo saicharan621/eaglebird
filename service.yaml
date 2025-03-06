@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: helloworld-service
+  namespace: default
+  labels:
+    app: helloworld
+spec:
+  selector:
+    app: helloworld
+  type: LoadBalancer  # Change to NodePort if needed
+  ports:
+    - protocol: TCP
+      port: 80        # External port
+      targetPort: 8080 # Internal port of the container

@@ -2,34 +2,32 @@ pipeline {
     agent any
 
     environment {
-        NEXUS_REPO = "maven-releases"
-        NEXUS_URL = "http://13.232.164.72:8081"
-        SONAR_URL = "http://3.110.120.134:9000"
-        DOCKER_IMAGE = "saicharan6771/helloworld"
+        DOCKER_IMAGE = 'saicharan6771/helloworld'
+        EKS_CLUSTER = 'helloworld-cluster'
     }
 
     stages {
-        stage('Checkout') {
+        stage('Git Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/saicharan621/eaglebird.git'
+                checkout scm
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonarqube-token') {
-                    sh 'mvn clean verify sonar:sonar'
+                withSonarQubeEnv('SonarQube') {
+                    sh 'mvn sonar:sonar'
                 }
             }
         }
 
-        stage('Build with Maven') {
+        stage('Maven Build') {
             steps {
                 sh 'mvn clean package'
             }
         }
 
-        stage('Push JAR to Nexus') {
+        stage('Upload to Nexus') {
             steps {
                 sh 'mvn deploy'
             }
@@ -41,20 +39,28 @@ pipeline {
             }
         }
 
+        stage('Login to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
+                }
+            }
+        }
+
         stage('Push Image to Docker Hub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                    sh 'docker push $DOCKER_IMAGE'
-                }
+                sh 'docker push $DOCKER_IMAGE'
             }
         }
 
         stage('Deploy to EKS') {
             steps {
-                withCredentials([string(credentialsId: 'aws-kubeconfig', variable: 'KUBECONFIG_PATH')]) {
-                    sh 'aws eks update-kubeconfig --name helloworld-cluster --region ap-southeast-1'
-                    sh 'kubectl apply -f deployment.yaml'
+                withCredentials([string(credentialsId: 'aws-eks-credentials', variable: 'AWS_CREDENTIALS')]) {
+                    sh '''
+                        aws eks --region us-east-1 update-kubeconfig --name $EKS_CLUSTER
+                        kubectl apply -f deployment.yaml
+                        kubectl apply -f service.yaml
+                    '''
                 }
             }
         }
