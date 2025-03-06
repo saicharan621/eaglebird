@@ -52,7 +52,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
-                    ls -lah target/  # Debug: Check if the JAR exists
+                    ls -lah target/  # Debugging step to check if the JAR exists
                     cp target/eaglebird-1.0-SNAPSHOT.jar eaglebird-1.0.jar  
                     docker build -t $DOCKER_IMAGE .
                 '''
@@ -72,29 +72,26 @@ pipeline {
 
         stage('Deploy to EKS') {
             steps {
-                withCredentials([
-                    file(credentialsId: 'aws-kubeconfig', variable: 'KUBECONFIG'),
-                    usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')
-                ]) {
-                    sh '''
-                        export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-                        export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-                        export AWS_REGION=$AWS_REGION
-                        export KUBECONFIG=$KUBECONFIG  # Use the provided kubeconfig file
+                withAWS(credentials: 'aws-credentials', region: "${AWS_REGION}") {  // Use AWS IAM Credentials
+                    withCredentials([file(credentialsId: 'aws-kubeconfig', variable: 'KUBECONFIG')]) {
+                        sh '''
+                            set -e  # Exit on first error
+                            export KUBECONFIG=$KUBECONFIG  # Use the provided kubeconfig file
 
-                        echo "Checking AWS Authentication..."
-                        aws sts get-caller-identity  # Debugging step to ensure AWS credentials are working
+                            echo "Checking AWS Authentication..."
+                            aws sts get-caller-identity  # Verify AWS authentication
 
-                        echo "Updating Kubeconfig for EKS..."
-                        aws eks --region $AWS_REGION update-kubeconfig --name $EKS_CLUSTER
+                            echo "Updating Kubeconfig for EKS..."
+                            aws eks --region $AWS_REGION update-kubeconfig --name $EKS_CLUSTER
 
-                        echo "Checking EKS Cluster Nodes..."
-                        kubectl get nodes  # Debugging step to ensure cluster connectivity
+                            echo "Checking EKS Cluster Nodes..."
+                            kubectl get nodes  # Ensure EKS is accessible
 
-                        echo "Deploying to EKS..."
-                        kubectl apply -f deployment.yaml
-                        kubectl apply -f service.yaml
-                    '''
+                            echo "Deploying to EKS..."
+                            kubectl apply -f deployment.yaml
+                            kubectl apply -f service.yaml
+                        '''
+                    }
                 }
             }
         }
