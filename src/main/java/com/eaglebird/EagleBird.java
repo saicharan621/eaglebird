@@ -1,3 +1,5 @@
+package com.eaglebird;  // Add this package declaration
+
 public class EagleBird {
     public static void main(String[] args) {
         for (int i = 1; i <= 5; i++) {
