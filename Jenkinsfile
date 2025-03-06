@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         NEXUS_REPO = "maven-releases"
-        NEXUS_URL = "http://13.234.18.135:8081"
-        SONAR_URL = "http://3.110.104.81:9000"
+        NEXUS_URL = "http://13.232.164.72:8081"
+        SONAR_URL = "http://3.110.120.134:9000"
         DOCKER_IMAGE = "saicharan6771/helloworld"
     }
 
