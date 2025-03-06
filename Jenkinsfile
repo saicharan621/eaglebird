@@ -52,7 +52,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
         sh '''
-            cp target/eaglebird-1.0.jar eaglebird-1.0.jar  
+            ls -lah target/  # Check if the JAR exists
+            cp target/eaglebird-1.0-SNAPSHOT.jar eaglebird-1.0.jar  
             docker build -t $DOCKER_IMAGE .
         '''
     }
