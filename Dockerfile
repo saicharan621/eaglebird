@@ -1,4 +1,4 @@
-FROM openjdk:11-jre-slim  # Use an appropriate JDK version
+FROM openjdk:17
 WORKDIR /app
-COPY target/*.jar helloworld.jar
-CMD ["java", "-jar", "/app/helloworld.jar"]
+COPY target/eaglebird-1.0-SNAPSHOT.jar app.jar
+CMD ["java", "-jar", "app.jar"]
