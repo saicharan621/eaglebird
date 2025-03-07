@@ -8,7 +8,7 @@ pipeline {
         DOCKER_IMAGE = "saicharan6771/helloworld"
         EKS_CLUSTER = "helloworld-cluster"
         AWS_REGION = "ap-south-1"
-        KUBECONFIG = "/tmp/kubeconfig"
+        KUBECONFIG = "/var/lib/jenkins/.kube/config"
     }
 
     stages {
@@ -22,6 +22,7 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
                     sh '''
+                        set -ex
                         mvn clean verify sonar:sonar \
                         -Dsonar.host.url=$SONAR_URL \
                         -Dsonar.login=$SONAR_TOKEN
@@ -32,7 +33,10 @@ pipeline {
 
         stage('Build with Maven') {
             steps {
-                sh 'mvn clean package'
+                sh '''
+                    set -ex
+                    mvn clean package
+                '''
             }
         }
 
@@ -40,6 +44,7 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
                     sh '''
+                        set -ex
                         mvn deploy \
                         -DrepositoryId=nexus \
                         -Durl=$NEXUS_URL/repository/$NEXUS_REPO \
@@ -53,8 +58,10 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
-                    ls -lah target/  # Debugging step to check if the JAR exists
-                    cp target/*.jar eaglebird-1.0.jar  # Copy the built JAR file
+                    set -ex
+                    ls -lah target/  # Debugging step
+                    JAR_FILE=$(find target -name "*.jar" | head -n 1)  
+                    cp $JAR_FILE eaglebird-1.0.jar  
                     docker build -t $DOCKER_IMAGE .
                 '''
             }
@@ -64,6 +71,7 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
+                        set -ex
                         echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
                         docker push $DOCKER_IMAGE
                     '''
@@ -75,7 +83,7 @@ pipeline {
             steps {
                 withAWS(credentials: 'aws-credentials', region: "${AWS_REGION}") {  
                     sh '''
-                        set -ex  # Debug mode to show errors
+                        set -ex  
 
                         echo "Checking AWS Authentication..."
                         aws sts get-caller-identity
