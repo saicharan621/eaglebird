@@ -1,16 +1,11 @@
-FROM openjdk:17
+# Use an official Java runtime as a parent image
+FROM openjdk:11-jre-slim
 
-# Ensure /app directory exists
-RUN mkdir -p /app
-
-# Set working directory
+# Set the working directory in the container
 WORKDIR /app
 
-# Copy jar file into the /app directory
+# Copy the JAR file into the container
 COPY ./eaglebird-1.0.jar /app/eaglebird-1.0.jar
 
-# List files in /app for debugging
-RUN ls -l /app
-
-# Set the entrypoint
-ENTRYPOINT ["java", "-jar", "eaglebird-1.0.jar"]
+# Set the entry point for the container
+ENTRYPOINT ["java", "-jar", "/app/eaglebird-1.0.jar"]
