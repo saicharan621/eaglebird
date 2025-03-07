@@ -22,13 +22,13 @@ spec:
       containers:
         - name: helloworld
           image: saicharan6771/helloworld:latest
-          command: ["java", "-jar", "/app/helloworld.jar"]  # Ensure the app runs continuously
+          command: ["java", "-jar", "/app/app.jar"]  # Corrected JAR filename
           ports:
             - containerPort: 8080
           resources:
             limits:
-              cpu: "500m"  
-              memory: "512Mi"  
+              cpu: "500m"
+              memory: "512Mi"
             requests:
               cpu: "250m"
               memory: "256Mi"
