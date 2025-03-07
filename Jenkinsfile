@@ -73,26 +73,19 @@ pipeline {
         stage('Deploy to EKS') {
             steps {
                 withAWS(credentials: 'aws-credentials', region: "${AWS_REGION}") {  
-                    withCredentials([file(credentialsId: 'aws-kubeconfig', variable: 'KUBECONFIG')]) {
-                        sh '''
-                            set -ex  # Debug mode to show errors
-                            
-                            echo "Checking AWS Authentication..."
-                            aws sts get-caller-identity
+                    sh '''
+                        set -ex  # Debug mode to show errors
+                        
+                        echo "Checking AWS Authentication..."
+                        aws sts get-caller-identity
 
-                            echo "Updating Kubeconfig for EKS..."
-                            export CUSTOM_KUBECONFIG=/tmp/kubeconfig  # Use a writable kubeconfig file
-                            export KUBECONFIG=$CUSTOM_KUBECONFIG  
-                            aws eks --region $AWS_REGION update-kubeconfig --name $EKS_CLUSTER --kubeconfig $CUSTOM_KUBECONFIG
+                        echo "Checking EKS Cluster Nodes..."
+                        kubectl get nodes  
 
-                            echo "Checking EKS Cluster Nodes..."
-                            kubectl get nodes  
-
-                            echo "Deploying to EKS..."
-                            kubectl apply -f deployment.yaml
-                            kubectl apply -f service.yaml
-                        '''
-                    }
+                        echo "Deploying to EKS..."
+                        kubectl apply -f deployment.yaml
+                        kubectl apply -f service.yaml
+                    '''
                 }
             }
         }
