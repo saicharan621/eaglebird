@@ -8,6 +8,7 @@ pipeline {
         DOCKER_IMAGE = "saicharan6771/helloworld"
         EKS_CLUSTER = "helloworld-cluster"
         AWS_REGION = "ap-south-1"
+        KUBECONFIG = "/tmp/kubeconfig"
     }
 
     stages {
@@ -75,9 +76,12 @@ pipeline {
                 withAWS(credentials: 'aws-credentials', region: "${AWS_REGION}") {  
                     sh '''
                         set -ex  # Debug mode to show errors
-                        
+
                         echo "Checking AWS Authentication..."
                         aws sts get-caller-identity
+
+                        echo "Updating Kubeconfig for EKS..."
+                        aws eks update-kubeconfig --name $EKS_CLUSTER --region $AWS_REGION --kubeconfig $KUBECONFIG
 
                         echo "Checking EKS Cluster Nodes..."
                         kubectl get nodes  
