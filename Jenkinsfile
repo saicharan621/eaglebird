@@ -5,7 +5,7 @@ pipeline {
         NEXUS_REPO = "maven-releases"
         NEXUS_URL = "http://13.232.73.82:8081"
         SONAR_URL = "http://3.110.157.133:9000"
-        DOCKER_IMAGE = "saicharan6771/helloworld"
+        DOCKER_IMAGE = "saicharan6771/eaglebird"
         EKS_CLUSTER = "helloworld-cluster"
         AWS_REGION = "ap-south-1"
         KUBECONFIG = "/var/lib/jenkins/.kube/config"
@@ -14,7 +14,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/saicharan621/eaglebird.git'
+                git branch: 'main', url: 'https://github.com/saicharan621/eaglebird.git', poll: true, clean: true
             }
         }
 
@@ -70,7 +70,7 @@ pipeline {
                     // Build Docker image
                     sh '''
                         set -ex
-                        docker build -t $DOCKER_IMAGE .
+                        docker build --no-cache -t $DOCKER_IMAGE .
                     '''
                 }
             }
