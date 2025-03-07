@@ -6,7 +6,7 @@
 
     <groupId>com.eaglebird</groupId>
     <artifactId>eaglebird</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <packaging>jar</packaging>
 
     <dependencies>
@@ -19,6 +19,7 @@
     </dependencies>
 
     <build>
+        <finalName>eaglebird-1.0</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
