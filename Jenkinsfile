@@ -13,10 +13,10 @@ pipeline {
 
     stages {
         stage('Checkout') {
-            steps {
-                git branch: 'main', url: 'https://github.com/saicharan621/eaglebird.git', poll: true, clean: true
-            }
-        }
+    steps {
+        git branch: 'main', url: 'https://github.com/saicharan621/eaglebird.git'
+    }
+}
 
         stage('SonarQube Analysis') {
             steps {
