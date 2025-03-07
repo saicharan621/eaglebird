@@ -57,13 +57,22 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh '''
-                    set -ex
-                    ls -lah target/  # Debugging step
-                    JAR_FILE=$(find target -name "*.jar" | head -n 1)  
-                    cp $JAR_FILE eaglebird-1.0.jar  
-                    docker build -t $DOCKER_IMAGE .
-                '''
+                script {
+                    // Debugging step to check if the .jar file exists in the target folder
+                    sh 'ls -lah target/'
+
+                    // Find the .jar file in the target directory
+                    def jarFile = sh(script: 'find target -name "*.jar" | head -n 1', returnStdout: true).trim()
+
+                    // Copy the JAR file to the current folder
+                    sh "cp ${jarFile} eaglebird-1.0.jar"
+
+                    // Build Docker image
+                    sh '''
+                        set -ex
+                        docker build -t $DOCKER_IMAGE .
+                    '''
+                }
             }
         }
 
@@ -81,9 +90,9 @@ pipeline {
 
         stage('Deploy to EKS') {
             steps {
-                withAWS(credentials: 'aws-credentials', region: "${AWS_REGION}") {  
+                withAWS(credentials: 'aws-credentials', region: "${AWS_REGION}") {
                     sh '''
-                        set -ex  
+                        set -ex
 
                         echo "Checking AWS Authentication..."
                         aws sts get-caller-identity
@@ -92,7 +101,7 @@ pipeline {
                         aws eks update-kubeconfig --name $EKS_CLUSTER --region $AWS_REGION --kubeconfig $KUBECONFIG
 
                         echo "Checking EKS Cluster Nodes..."
-                        kubectl get nodes  
+                        kubectl get nodes
 
                         echo "Deploying to EKS..."
                         kubectl apply -f deployment.yaml
