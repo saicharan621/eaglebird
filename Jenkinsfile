@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         NEXUS_REPO = "maven-releases"
-        NEXUS_URL = "http://http://13.232.73.82:8081"
-        SONAR_URL = "http://http://3.110.157.133:9000"
+        NEXUS_URL = "http://13.232.73.82:8081"
+        SONAR_URL = "http://3.110.157.133:9000"
         DOCKER_IMAGE = "saicharan6771/helloworld"
         EKS_CLUSTER = "helloworld-cluster"
         AWS_REGION = "ap-south-1"
