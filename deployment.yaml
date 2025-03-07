@@ -2,45 +2,18 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: helloworld-app
-  labels:
-    app: helloworld
 spec:
   replicas: 2
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
   selector:
     matchLabels:
-      app: helloworld
+      app: helloworld-app
   template:
     metadata:
       labels:
-        app: helloworld
+        app: helloworld-app
     spec:
       containers:
-        - name: helloworld
-          image: saicharan6771/helloworld:latest
-          command: ["java", "-jar", "/app/eaglebird-1.0.jar"] # Corrected JAR filename
-          ports:
-            - containerPort: 8080
-          resources:
-            limits:
-              cpu: "500m"
-              memory: "512Mi"
-            requests:
-              cpu: "250m"
-              memory: "256Mi"
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 8080
-            initialDelaySeconds: 20
-            periodSeconds: 5
+      - name: eaglebird
+        image: saicharan6771/eaglebird:latest  # Ensure it's the correct image
+        ports:
+        - containerPort: 8080
